@@ -74,7 +74,7 @@
 
       firebase.auth().signInWithEmailAndPassword(email, password)
         .then(userCredential => {
-          window.location.href = "admin.html";
+          window.location.href = "admin-dashboard.html";
         })
         .catch(error => {
           msg.textContent = "Login gagal: " + error.message;
