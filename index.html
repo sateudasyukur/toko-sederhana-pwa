@@ -131,13 +131,15 @@
     }
 
     function checkout() {
-      const notif = document.getElementById("notif");
-      notif.style.display = "block";
-      setTimeout(() => {
-        notif.style.display = "none";
-        cart = [];
-        renderCart();
-      }, 2000);
+  	const notif = document.getElementById("notif");
+  	notif.style.display = "block";
+  	setTimeout(() => {
+    		notif.style.display = "none";
+    		cart = [];
+    		renderCart();
+  	}, 2000);
+    }
+
     }
 
     const productContainer = document.getElementById("products");
