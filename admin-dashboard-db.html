@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Pesanan</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #f4f4f4;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #eee;
+    }
+    .logout-btn {
+      margin-top: 2rem;
+      background: #d9534f;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .logout-btn:hover {
+      background: #c9302c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Daftar Pesanan</h1>
+    <table id="pesanan-table">
+      <thead>
+        <tr>
+          <th>Waktu</th>
+          <th>Total</th>
+          <th>Menu</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
+      authDomain: "uda-syukur.firebaseapp.com",
+      projectId: "uda-syukur"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "admin-login.html";
+      } else {
+        loadPesanan();
+      }
+    });
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "admin-login.html";
+      });
+    }
+
+    function loadPesanan() {
+      const tbody = document.querySelector("#pesanan-table tbody");
+      db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const row = document.createElement("tr");
+
+          const waktu = new Date(data.waktu).toLocaleString("id-ID");
+          const total = "Rp " + data.total.toLocaleString("id-ID");
+          const items = (data.items || []).map(i => `${i.nama}`).join(", ");
+
+          row.innerHTML = `<td>${waktu}</td><td>${total}</td><td>${items}</td>`;
+          tbody.appendChild(row);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
