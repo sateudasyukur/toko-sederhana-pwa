@@ -95,7 +95,19 @@
       { id: 1, name: "Minas Ayam", price: 18000, image: "minas-ayam.png" },
       { id: 2, name: "Minas Sate", price: 14000, image: "minas-sate.png" },
       { id: 3, name: "Minas Telor", price: 14000, image: "minas-telor.png" },
-      { id: 4, name: "Minuman All Varian", price: 5000, image: "minuman.png" }
+      { id: 4, name: "Minas Sate Telor", price: 17000 },
+      { id: 5, name: "Sate Padang Kacang", price: 12000 },
+      { id: 6, name: "Nasi Goreng", price: 13000 },
+      { id: 7, name: "Nasi Goreng Telor", price: 14000 },
+      { id: 8, name: "Minas", price: 10000 },
+      { id: 9, name: "Minuman All Varian", price: 5000, image: "minuman.png" },
+      { id: 10, name: "Mie Goreng Telor", price: 10000 },
+      { id: 11, name: "Mie Goreng Ayam", price: 15000 },
+      { id: 12, name: "Ayam Geprek", price: 10000 },
+      { id: 13, name: "Mie Nasi Putih Ayam", price: 14000 },
+      { id: 14, name: "Mie Nasi Putih Telur", price: 12000 },
+      { id: 15, name: "Mie Rebus", price: 10000 },
+      { id: 16, name: "Mie Rebus Nasi", price: 12000 }
     ];
 
     let cart = [];
@@ -132,9 +144,10 @@
       const productContainer = document.getElementById("products");
       products.forEach(product => {
         const div = document.createElement("div");
+        const imageName = product.image ? product.image : "placeholder.jpg";
         div.className = "menu-card";
         div.innerHTML = `
-          <img src="img/${product.image}" alt="${product.name}">
+          <img src="img/${imageName}" alt="${product.name}">
           <h3>${product.name}</h3>
           <p>Harga: Rp ${product.price}</p>
           <button onclick="addToCart(${product.id})">Tambah ke Keranjang</button>
