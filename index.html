@@ -8,9 +8,47 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-512.png" />
   <meta name="theme-color" content="#4CAF50" />
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; }
+    h1 { color: #333; }
+    .menu-item { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: #fff; }
+    .menu-item h3 { margin: 0; }
+    .menu-item p { margin: 5px 0 0; }
+  </style>
 </head>
 <body>
   <h1>Menu Toko Sederhana</h1>
-  <p>Aplikasi toko makanan & minuman sederhana.</p>
+  <div id="products"></div>
+
+  <script>
+    // Daftar menu lengkap
+    const products = [
+      { id: 1, name: "Minas Ayam", price: 18000 },
+      { id: 2, name: "Minas Sate", price: 14000 },
+      { id: 3, name: "Minas Telor", price: 14000 },
+      { id: 4, name: "Minas Sate Telor", price: 17000 },
+      { id: 5, name: "Sate Padang Kacang", price: 12000 },
+      { id: 6, name: "Nasi Goreng", price: 13000 },
+      { id: 7, name: "Nasi Goreng Telor", price: 14000 },
+      { id: 8, name: "Minas", price: 10000 },
+      { id: 9, name: "Minuman All Varian", price: 5000 },
+      { id: 10, name: "Mie Goreng Telor", price: 10000 },
+      { id: 11, name: "Mie Goreng Ayam", price: 15000 },
+      { id: 12, name: "Ayam Geprek", price: 10000 },
+      { id: 13, name: "Mie Nasi Putih Ayam", price: 14000 },
+      { id: 14, name: "Mie Nasi Putih Telur", price: 12000 },
+      { id: 15, name: "Mie Rebus", price: 10000 },
+      { id: 16, name: "Mie Rebus Nasi", price: 12000 }
+    ];
+
+    // Tampilkan menu
+    const productDiv = document.getElementById('products');
+    products.forEach(product => {
+      const item = document.createElement('div');
+      item.className = 'menu-item';
+      item.innerHTML = `<h3>${product.name}</h3><p>Harga: Rp ${product.price}</p>`;
+      productDiv.appendChild(item);
+    });
+  </script>
 </body>
 </html>
