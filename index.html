@@ -4,10 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Toko Sederhana</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-  <link rel="apple-touch-icon" href="icon-512.png" />
-  <meta name="theme-color" content="#4CAF50" />
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -31,9 +29,6 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       padding: 12px;
       text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
     }
     .menu-card img {
       width: 100%;
@@ -53,29 +48,11 @@
       cursor: pointer;
       margin-top: 8px;
     }
-    .menu-card button:hover {
-      background: #218838;
-    }
     #cart {
       margin-top: 2rem;
       background: white;
       padding: 1rem;
       border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    #notif {
-      display: none;
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #4CAF50;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      font-size: 16px;
-      z-index: 999;
     }
   </style>
 </head>
@@ -87,20 +64,29 @@
     <ul id="cart-items"></ul>
     <p>Total: Rp <span id="total">0</span></p>
     <button onclick="checkout()">Checkout</button>
+    <p id="notif" style="color: green;"></p>
   </div>
-  <div id="notif">Pesanan Anda telah diproses!</div>
 
   <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
+      authDomain: "uda-syukur.firebaseapp.com",
+      projectId: "uda-syukur"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     const products = [
-      { id: 1, name: "Minas Ayam", price: 18000, image: "minas-ayam.png" },
-      { id: 2, name: "Minas Sate", price: 14000, image: "minas-sate.png" },
-      { id: 3, name: "Minas Telor", price: 14000, image: "minas-telor.png" },
+      { id: 1, name: "Minas Ayam", price: 18000 },
+      { id: 2, name: "Minas Sate", price: 14000 },
+      { id: 3, name: "Minas Telor", price: 14000 },
       { id: 4, name: "Minas Sate Telor", price: 17000 },
       { id: 5, name: "Sate Padang Kacang", price: 12000 },
       { id: 6, name: "Nasi Goreng", price: 13000 },
       { id: 7, name: "Nasi Goreng Telor", price: 14000 },
       { id: 8, name: "Minas", price: 10000 },
-      { id: 9, name: "Minuman All Varian", price: 5000, image: "minuman.png" },
+      { id: 9, name: "Minuman All Varian", price: 5000 },
       { id: 10, name: "Mie Goreng Telor", price: 10000 },
       { id: 11, name: "Mie Goreng Ayam", price: 15000 },
       { id: 12, name: "Ayam Geprek", price: 10000 },
@@ -111,6 +97,7 @@
     ];
 
     let cart = [];
+
     function addToCart(id) {
       const product = products.find(p => p.id === id);
       cart.push(product);
@@ -131,30 +118,38 @@
     }
 
     function checkout() {
-      const notif = document.getElementById("notif");
-      notif.style.display = "block";
-      setTimeout(() => {
-        notif.style.display = "none";
-        cart = [];
-        renderCart();
-      }, 2000);
+      const total = cart.reduce((sum, item) => sum + item.price, 0);
+      const orderData = {
+        waktu: new Date().toISOString(),
+        total: total,
+        items: cart.map(item => ({
+          nama: item.name,
+          harga: item.price
+        }))
+      };
+
+      db.collection("pesanan").add(orderData)
+        .then(() => {
+          document.getElementById("notif").textContent = "✅ Pesanan berhasil disimpan!";
+          cart = [];
+          renderCart();
+        })
+        .catch((error) => {
+          document.getElementById("notif").textContent = "❌ Gagal menyimpan pesanan: " + error.message;
+        });
     }
 
-    window.onload = () => {
-      const productContainer = document.getElementById("products");
-      products.forEach(product => {
-        const div = document.createElement("div");
-        const imageName = product.image ? product.image : "placeholder.jpg";
-        div.className = "menu-card";
-        div.innerHTML = `
-          <img src="img/${imageName}" alt="${product.name}">
-          <h3>${product.name}</h3>
-          <p>Harga: Rp ${product.price}</p>
-          <button onclick="addToCart(${product.id})">Tambah ke Keranjang</button>
-        `;
-        productContainer.appendChild(div);
-      });
-    };
+    const productContainer = document.getElementById("products");
+    products.forEach(product => {
+      const div = document.createElement("div");
+      div.className = "menu-card";
+      div.innerHTML = `
+        <h3>${product.name}</h3>
+        <p>Harga: Rp ${product.price}</p>
+        <button onclick="addToCart(${product.id})">Tambah ke Keranjang</button>
+      `;
+      productContainer.appendChild(div);
+    });
   </script>
 </body>
 </html>
