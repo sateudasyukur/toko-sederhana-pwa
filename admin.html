@@ -49,18 +49,12 @@
   </div>
 
   <script>
-    // Ganti konfigurasi berikut dengan config Firebase kamu
-    const firebaseConfig = {
-      apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
-      authDomain: "uda-syukur.firebaseapp.com",
-      projectId: "uda-syukur"
-    };
+    const firebaseConfig = {'apiKey': 'AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw', 'authDomain': 'uda-syukur.firebaseapp.com', 'projectId': 'uda-syukur'};
 
     firebase.initializeApp(firebaseConfig);
 
     firebase.auth().onAuthStateChanged(user => {
       if (!user) {
-        // Jika belum login, redirect ke halaman login
         window.location.href = "admin-login.html";
       }
     });
