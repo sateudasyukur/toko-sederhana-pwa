@@ -63,6 +63,20 @@
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
+    #notif {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      font-size: 16px;
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
@@ -74,6 +88,7 @@
     <p>Total: Rp <span id="total">0</span></p>
     <button onclick="checkout()">Checkout</button>
   </div>
+  <div id="notif">Pesanan Anda telah diproses!</div>
 
   <script>
     const products = [
@@ -116,9 +131,13 @@
     }
 
     function checkout() {
-      alert("Pesanan Anda telah diproses!");
-      cart = [];
-      renderCart();
+      const notif = document.getElementById("notif");
+      notif.style.display = "block";
+      setTimeout(() => {
+        notif.style.display = "none";
+        cart = [];
+        renderCart();
+      }, 2000);
     }
 
     const productContainer = document.getElementById("products");
