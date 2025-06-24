@@ -3,7 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Admin Lengkap</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Admin Toko">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Admin Toko">
+
+  <title>Dashboard Admin + Nama Pelanggan</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -15,7 +34,7 @@
       background: #f4f4f4;
     }
     .container {
-      max-width: 850px;
+      max-width: 950px;
       margin: auto;
       background: white;
       padding: 2rem;
@@ -26,9 +45,9 @@
       text-align: center;
       margin-bottom: 0.5rem;
     }
-    h3 {
+    h3, h4 {
       text-align: center;
-      margin-top: 0;
+      margin-top: 0.2rem;
       color: #4CAF50;
     }
     .filter {
@@ -73,15 +92,17 @@
   <div class="container">
     <h1>Dashboard Admin</h1>
     <div class="filter">
-      <label for="tanggal">Filter Pesanan per Tanggal: </label>
+      <label for="tanggal">Filter Tanggal: </label>
       <input type="date" id="tanggal" onchange="filterTanggal()" />
       <button onclick="resetFilter()">Tampilkan Semua</button>
     </div>
     <h3 id="total-income">Total Pendapatan: Rp 0</h3>
+    <h4 id="terlaris">Menu Terlaris: -</h4>
     <table id="pesanan-table">
       <thead>
         <tr>
           <th>Waktu</th>
+          <th>Nama Pelanggan</th>
           <th>Total</th>
           <th>Menu</th>
         </tr>
@@ -118,21 +139,38 @@
     function renderPesanan(snapshot) {
       const tbody = document.querySelector("#pesanan-table tbody");
       const totalIncomeEl = document.getElementById("total-income");
+      const terlarisEl = document.getElementById("terlaris");
       tbody.innerHTML = "";
       let totalPendapatan = 0;
+      let countMenu = {};
 
       snapshot.forEach(doc => {
         const data = doc.data();
         const row = document.createElement("tr");
         const waktu = new Date(data.waktu).toLocaleString("id-ID");
+        const nama = data.nama || "-";
         const total = data.total || 0;
-        const items = (data.items || []).map(i => i.nama).join(", ");
-        row.innerHTML = `<td>${waktu}</td><td>Rp ${total.toLocaleString("id-ID")}</td><td>${items}</td>`;
+        const items = (data.items || []).map(i => {
+          countMenu[i.nama] = (countMenu[i.nama] || 0) + 1;
+          return i.nama;
+        }).join(", ");
+
+        row.innerHTML = `<td>${waktu}</td><td>${nama}</td><td>Rp ${total.toLocaleString("id-ID")}</td><td>${items}</td>`;
         tbody.appendChild(row);
         totalPendapatan += total;
       });
 
       totalIncomeEl.textContent = "Total Pendapatan: Rp " + totalPendapatan.toLocaleString("id-ID");
+
+      let terlaris = "-";
+      let max = 0;
+      for (const [menu, count] of Object.entries(countMenu)) {
+        if (count > max) {
+          max = count;
+          terlaris = `${menu} (${count}x)`;
+        }
+      }
+      terlarisEl.textContent = "Menu Terlaris: " + terlaris;
     }
 
     function loadAll() {
