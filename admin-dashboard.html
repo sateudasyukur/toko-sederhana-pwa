@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Admin</title>
+  <title>Dashboard Admin Lengkap</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -14,7 +15,7 @@
       background: #f4f4f4;
     }
     .container {
-      max-width: 700px;
+      max-width: 850px;
       margin: auto;
       background: white;
       padding: 2rem;
@@ -23,74 +24,71 @@
     }
     h1 {
       text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    h3 {
+      text-align: center;
+      margin-top: 0;
+      color: #4CAF50;
+    }
+    .filter {
+      text-align: center;
       margin-bottom: 1rem;
     }
-    .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin: 1rem 0;
+    .filter input {
+      padding: 6px;
+      font-size: 14px;
     }
-    .card {
-      background: #f0f0f0;
-      padding: 1rem;
-      border-radius: 8px;
-      text-align: center;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
     }
-    .card h3 {
-      margin: 0.5rem 0;
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
     }
-    .actions {
-      text-align: center;
-      margin-top: 2rem;
-    }
-    .actions button {
-      margin: 0.5rem;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
+    th {
+      background: #eee;
     }
     .logout-btn {
+      margin-top: 2rem;
       background: #d9534f;
       color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     }
     .logout-btn:hover {
       background: #c9302c;
-    }
-    .nav-btn {
-      background: #4CAF50;
-      color: white;
-    }
-    .nav-btn:hover {
-      background: #43a047;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Dashboard Admin</h1>
-    <p style="text-align: center;">Selamat datang! Berikut ringkasan pesanan hari ini:</p>
-    <div class="stats">
-      <div class="card">
-        <h2>12</h2>
-        <h3>Total Pesanan</h3>
-      </div>
-      <div class="card">
-        <h2>Rp 235.000</h2>
-        <h3>Total Pendapatan</h3>
-      </div>
-      <div class="card" style="grid-column: span 2;">
-        <h2>Minas Ayam</h2>
-        <h3>Menu Terlaris</h3>
-      </div>
+    <div class="filter">
+      <label for="tanggal">Filter Pesanan per Tanggal: </label>
+      <input type="date" id="tanggal" onchange="filterTanggal()" />
+      <button onclick="resetFilter()">Tampilkan Semua</button>
     </div>
-    <div class="actions">
-      <button class="nav-btn" onclick="alert('Fitur Lihat Pesanan coming soon')">Lihat Pesanan</button>
-      <button class="nav-btn" onclick="alert('Fitur Kelola Menu coming soon')">Kelola Menu</button>
-      <button class="logout-btn" onclick="logout()">Logout</button>
-    </div>
+    <h3 id="total-income">Total Pendapatan: Rp 0</h3>
+    <table id="pesanan-table">
+      <thead>
+        <tr>
+          <th>Waktu</th>
+          <th>Total</th>
+          <th>Menu</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
   <script>
@@ -101,10 +99,13 @@
     };
 
     firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
     firebase.auth().onAuthStateChanged(user => {
       if (!user) {
         window.location.href = "admin-login.html";
+      } else {
+        loadAll();
       }
     });
 
@@ -112,6 +113,54 @@
       firebase.auth().signOut().then(() => {
         window.location.href = "admin-login.html";
       });
+    }
+
+    function renderPesanan(snapshot) {
+      const tbody = document.querySelector("#pesanan-table tbody");
+      const totalIncomeEl = document.getElementById("total-income");
+      tbody.innerHTML = "";
+      let totalPendapatan = 0;
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const row = document.createElement("tr");
+        const waktu = new Date(data.waktu).toLocaleString("id-ID");
+        const total = data.total || 0;
+        const items = (data.items || []).map(i => i.nama).join(", ");
+        row.innerHTML = `<td>${waktu}</td><td>Rp ${total.toLocaleString("id-ID")}</td><td>${items}</td>`;
+        tbody.appendChild(row);
+        totalPendapatan += total;
+      });
+
+      totalIncomeEl.textContent = "Total Pendapatan: Rp " + totalPendapatan.toLocaleString("id-ID");
+    }
+
+    function loadAll() {
+      db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
+        renderPesanan(snapshot);
+      });
+    }
+
+    function filterTanggal() {
+      const tanggalInput = document.getElementById("tanggal").value;
+      if (!tanggalInput) return loadAll();
+
+      const tanggalAwal = new Date(tanggalInput + "T00:00:00");
+      const tanggalAkhir = new Date(tanggalInput + "T23:59:59");
+
+      db.collection("pesanan")
+        .where("waktu", ">=", tanggalAwal.toISOString())
+        .where("waktu", "<=", tanggalAkhir.toISOString())
+        .orderBy("waktu", "desc")
+        .get()
+        .then(snapshot => {
+          renderPesanan(snapshot);
+        });
+    }
+
+    function resetFilter() {
+      document.getElementById("tanggal").value = "";
+      loadAll();
     }
   </script>
 </body>
