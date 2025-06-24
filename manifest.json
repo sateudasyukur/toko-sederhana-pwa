@@ -1,12 +1,21 @@
 {
-    "name": "Toko Sederhana",
-    "short_name": "Toko",
-    "start_url": "./toko.html",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#28a745",
-    "icons": [
-        { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-        { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
-    ]
+  "name": "Toko Sederhana PWA",
+  "short_name": "Toko Sederhana",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4CAF50",
+  "description": "Aplikasi Toko Makanan & Minuman yang bisa diinstall dan digunakan offline",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
