@@ -140,18 +140,20 @@
       }, 2000);
     }
 
-    const productContainer = document.getElementById("products");
-    products.forEach(product => {
-      const div = document.createElement("div");
-      div.className = "menu-card";
-      div.innerHTML = `
-        <img src="img/${product.image}" alt="${product.name}">
-        <h3>${product.name}</h3>
-        <p>Harga: Rp ${product.price}</p>
-        <button onclick="addToCart(${product.id})">Tambah ke Keranjang</button>
-      `;
-      productContainer.appendChild(div);
-    });
+    window.onload = () => {
+      const productContainer = document.getElementById("products");
+      products.forEach(product => {
+        const div = document.createElement("div");
+        div.className = "menu-card";
+        div.innerHTML = `
+          <img src="img/${product.image}" alt="${product.name}">
+          <h3>${product.name}</h3>
+          <p>Harga: Rp ${product.price}</p>
+          <button onclick="addToCart(${product.id})">Tambah ke Keranjang</button>
+        `;
+        productContainer.appendChild(div);
+      });
+    };
   </script>
 </body>
 </html>
