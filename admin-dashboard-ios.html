@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Admin Toko">
+
+  <title>Dashboard Admin + Nama Pelanggan</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #f4f4f4;
+    }
+    .container {
+      max-width: 950px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    h3, h4 {
+      text-align: center;
+      margin-top: 0.2rem;
+      color: #4CAF50;
+    }
+    .filter {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .filter input {
+      padding: 6px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #eee;
+    }
+    .logout-btn {
+      margin-top: 2rem;
+      background: #d9534f;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .logout-btn:hover {
+      background: #c9302c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Dashboard Admin</h1>
+    <div class="filter">
+      <label for="tanggal">Filter Tanggal: </label>
+      <input type="date" id="tanggal" onchange="filterTanggal()" />
+      <button onclick="resetFilter()">Tampilkan Semua</button>
+    </div>
+    <h3 id="total-income">Total Pendapatan: Rp 0</h3>
+    <h4 id="terlaris">Menu Terlaris: -</h4>
+    <table id="pesanan-table">
+      <thead>
+        <tr>
+          <th>Waktu</th>
+          <th>Nama Pelanggan</th>
+          <th>Total</th>
+          <th>Menu</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
+      authDomain: "uda-syukur.firebaseapp.com",
+      projectId: "uda-syukur"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "admin-login.html";
+      } else {
+        loadAll();
+      }
+    });
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "admin-login.html";
+      });
+    }
+
+    function renderPesanan(snapshot) {
+      const tbody = document.querySelector("#pesanan-table tbody");
+      const totalIncomeEl = document.getElementById("total-income");
+      const terlarisEl = document.getElementById("terlaris");
+      tbody.innerHTML = "";
+      let totalPendapatan = 0;
+      let countMenu = {};
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const row = document.createElement("tr");
+        const waktu = new Date(data.waktu).toLocaleString("id-ID");
+        const nama = data.nama || "-";
+        const total = data.total || 0;
+        const items = (data.items || []).map(i => {
+          countMenu[i.nama] = (countMenu[i.nama] || 0) + 1;
+          return i.nama;
+        }).join(", ");
+
+        row.innerHTML = `<td>${waktu}</td><td>${nama}</td><td>Rp ${total.toLocaleString("id-ID")}</td><td>${items}</td>`;
+        tbody.appendChild(row);
+        totalPendapatan += total;
+      });
+
+      totalIncomeEl.textContent = "Total Pendapatan: Rp " + totalPendapatan.toLocaleString("id-ID");
+
+      let terlaris = "-";
+      let max = 0;
+      for (const [menu, count] of Object.entries(countMenu)) {
+        if (count > max) {
+          max = count;
+          terlaris = `${menu} (${count}x)`;
+        }
+      }
+      terlarisEl.textContent = "Menu Terlaris: " + terlaris;
+    }
+
+    function loadAll() {
+      db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
+        renderPesanan(snapshot);
+      });
+    }
+
+    function filterTanggal() {
+      const tanggalInput = document.getElementById("tanggal").value;
+      if (!tanggalInput) return loadAll();
+
+      const tanggalAwal = new Date(tanggalInput + "T00:00:00");
+      const tanggalAkhir = new Date(tanggalInput + "T23:59:59");
+
+      db.collection("pesanan")
+        .where("waktu", ">=", tanggalAwal.toISOString())
+        .where("waktu", "<=", tanggalAkhir.toISOString())
+        .orderBy("waktu", "desc")
+        .get()
+        .then(snapshot => {
+          renderPesanan(snapshot);
+        });
+    }
+
+    function resetFilter() {
+      document.getElementById("tanggal").value = "";
+      loadAll();
+    }
+  </script>
+</body>
+</html>
