@@ -30,11 +30,6 @@
       padding: 12px;
       text-align: center;
     }
-    .menu-card img {
-      width: 100%;
-      height: auto;
-      border-radius: 8px;
-    }
     .menu-card h3 {
       margin: 10px 0 5px;
       font-size: 16px;
@@ -48,19 +43,31 @@
       cursor: pointer;
       margin-top: 8px;
     }
+    .menu-card button:hover {
+      background: #218838;
+    }
     #cart {
       margin-top: 2rem;
       background: white;
       padding: 1rem;
       border-radius: 10px;
     }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
   <h1>MENU HARI INI</h1>
   <div id="products" class="menu-grid"></div>
+
   <div id="cart">
     <h2>Keranjang Belanja</h2>
+    <input type="text" id="customer-name" placeholder="Nama Pelanggan (opsional)">
     <ul id="cart-items"></ul>
     <p>Total: Rp <span id="total">0</span></p>
     <button onclick="checkout()">Checkout</button>
@@ -73,7 +80,6 @@
       authDomain: "uda-syukur.firebaseapp.com",
       projectId: "uda-syukur"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -110,17 +116,19 @@
       let total = 0;
       cart.forEach(item => {
         const li = document.createElement("li");
-        li.textContent = item.name + " - Rp " + item.price;
+        li.textContent = item.name + " - Rp " + item.price.toLocaleString("id-ID");
         cartItems.appendChild(li);
         total += item.price;
       });
-      document.getElementById("total").textContent = total;
+      document.getElementById("total").textContent = total.toLocaleString("id-ID");
     }
 
     function checkout() {
+      const nama = document.getElementById("customer-name").value.trim();
       const total = cart.reduce((sum, item) => sum + item.price, 0);
       const orderData = {
         waktu: new Date().toISOString(),
+        nama: nama,
         total: total,
         items: cart.map(item => ({
           nama: item.name,
@@ -133,6 +141,7 @@
           document.getElementById("notif").textContent = "✅ Pesanan berhasil disimpan!";
           cart = [];
           renderCart();
+          document.getElementById("customer-name").value = "";
         })
         .catch((error) => {
           document.getElementById("notif").textContent = "❌ Gagal menyimpan pesanan: " + error.message;
@@ -145,7 +154,7 @@
       div.className = "menu-card";
       div.innerHTML = `
         <h3>${product.name}</h3>
-        <p>Harga: Rp ${product.price}</p>
+        <p>Harga: Rp ${product.price.toLocaleString("id-ID")}</p>
         <button onclick="addToCart(${product.id})">Tambah ke Keranjang</button>
       `;
       productContainer.appendChild(div);
