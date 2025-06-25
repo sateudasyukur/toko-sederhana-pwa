@@ -8,45 +8,22 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      max-width: 600px;
-      margin: auto;
-      padding: 1rem;
-    }
-    h1 {
-      text-align: center;
-    }
-    form {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-    input {
-      flex: 1;
-      padding: 8px;
-    }
-    button {
-      padding: 8px 16px;
-      cursor: pointer;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-    }
-    td:last-child {
-      text-align: center;
-    }
+    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 1rem; }
+    h1 { text-align: center; }
+    form, .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    input { flex: 1; padding: 8px; }
+    button { padding: 8px 16px; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+    td:last-child { text-align: center; }
   </style>
 </head>
 <body>
   <h1>Kelola Menu</h1>
+
+  <div class="toolbar">
+    <button onclick="addDefaultMenu()">🧾 Tambah Menu Default</button>
+  </div>
 
   <form id="menu-form" onsubmit="addMenu(event)">
     <input type="text" id="name" placeholder="Nama menu" required />
@@ -56,11 +33,7 @@
 
   <table id="menu-table">
     <thead>
-      <tr>
-        <th>Nama</th>
-        <th>Harga</th>
-        <th>Aksi</th>
-      </tr>
+      <tr><th>Nama</th><th>Harga</th><th>Aksi</th></tr>
     </thead>
     <tbody></tbody>
   </table>
@@ -82,9 +55,7 @@
       tr.innerHTML = `
         <td>${doc.data().name}</td>
         <td>Rp ${doc.data().price.toLocaleString("id-ID")}</td>
-        <td>
-          <button onclick="deleteMenu('${doc.id}')">❌ Hapus</button>
-        </td>
+        <td><button onclick="deleteMenu('${doc.id}')">❌ Hapus</button></td>
       `;
       tbody.appendChild(tr);
     }
@@ -111,6 +82,33 @@
       if (confirm("Yakin ingin menghapus menu ini?")) {
         db.collection("menu").doc(id).delete().then(loadMenu);
       }
+    }
+
+    function addDefaultMenu() {
+      const defaultMenu = [
+        { name: "Minas Ayam", price: 18000 },
+        { name: "Minas Sate", price: 14000 },
+        { name: "Minas Telor", price: 14000 },
+        { name: "Minas Sate Telor", price: 17000 },
+        { name: "Sate Padang Kacang", price: 12000 },
+        { name: "Nasi Goreng", price: 13000 },
+        { name: "Nasi Goreng Telor", price: 14000 },
+        { name: "Minas", price: 10000 },
+        { name: "Minuman All Varian", price: 5000 },
+        { name: "Mie Goreng Telor", price: 10000 },
+        { name: "Mie Goreng Ayam", price: 15000 },
+        { name: "Ayam Geprek", price: 10000 },
+        { name: "Mie Nasi Putih Ayam", price: 14000 },
+        { name: "Mie Nasi Putih Telur", price: 12000 },
+        { name: "Mie Rebus", price: 10000 },
+        { name: "Mie Rebus Nasi", price: 12000 }
+      ];
+      defaultMenu.forEach(item => {
+        db.collection("menu").add(item).then(() => {
+          console.log("✔️ Ditambahkan:", item.name);
+        });
+      });
+      setTimeout(loadMenu, 1500);
     }
 
     firebase.auth().onAuthStateChanged(user => {
