@@ -1,12 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Daftar Pesanan per Tanggal</title>
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Daftar Pesanan per Tanggal
+  </title>
   <style>
-    body {
+   body {
       font-family: sans-serif;
       padding: 1rem;
       max-width: 960px;
@@ -48,30 +49,55 @@
       cursor: pointer;
     }
   </style>
-</head>
-<body>
-  <h1>Daftar Pesanan</h1>
+ </head>
+ <body>
+  <h1>
+   Daftar Pesanan
+  </h1>
   <div class="filter">
-    <label for="tanggal">Tanggal:</label>
-    <input type="date" id="tanggal" />
-    <button onclick="loadPesanan()">Tampilkan</button>
+   <label for="tanggal">
+    Tanggal:
+   </label>
+   <input id="tanggal" type="date"/>
+   <button onclick="loadPesanan()">
+    Tampilkan
+   </button>
   </div>
-
   <table id="tabel">
-    <thead>
-      <tr><th>Tanggal</th><th>Nama</th><th>Item</th><th>Total</th></tr>
-    </thead>
-    <tbody></tbody>
+   <thead>
+    <tr>
+     <th>
+      Tanggal
+     </th>
+     <th>
+      Nama
+     </th>
+     <th>
+      Item
+     </th>
+     <th>
+      Total
+     </th>
+    </tr>
+   </thead>
+   <tbody>
+   </tbody>
   </table>
-
-  <div class="total">Total Pendapatan: Rp <span id="total">0</span></div>
-
+  <div class="total">
+   Total Pendapatan: Rp
+   <span id="total">
+    0
+   </span>
+  </div>
   <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js">
+  </script>
   <script>
-    const firebaseConfig = {
+   const firebaseConfig = {
       apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
       authDomain: "uda-syukur.firebaseapp.com",
       projectId: "uda-syukur"
@@ -99,7 +125,7 @@
       db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
         snapshot.forEach(doc => {
           const data = doc.data();
-          const waktu = new Date(data.waktu);
+          const waktu = data.waktu instanceof Date ? data.waktu : data.waktu instanceof Date ? data.waktu : data.waktu.toDate();
           const tanggal = waktu.toISOString().split("T")[0];
           if (tanggal !== tgl) return;
 
@@ -118,5 +144,5 @@
       });
     }
   </script>
-</body>
+ </body>
 </html>

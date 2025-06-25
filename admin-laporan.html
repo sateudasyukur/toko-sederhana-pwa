@@ -134,7 +134,7 @@
         .get().then(snapshot => {
           snapshot.forEach(doc => {
             const data = doc.data();
-            const waktu = data.waktu.toDate();
+            const waktu = data.waktu instanceof Date ? data.waktu : data.waktu.toDate();
             if (isNaN(waktu.getTime())) return;
             const tanggalStr = waktu.toISOString().split("T")[0];
             const items = data.items.map(i => i.nama + " (" + i.harga + ")").join(", ");
