@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Beranda Admin + Grafik</title>
+  <title>Dashboard Admin + Grafik</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -73,6 +73,7 @@
 
   <canvas id="chart-total" height="100"></canvas>
   <canvas id="chart-menu" height="100"></canvas>
+  <canvas id="chart-line" height="120"></canvas>
 
   <script>
     const firebaseConfig = {
@@ -83,7 +84,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let chartTotal, chartMenu;
+    let chartTotal, chartMenu, chartLine;
 
     firebase.auth().onAuthStateChanged(user => {
       if (!user) {
@@ -92,6 +93,7 @@
         const today = new Date().toISOString().split("T")[0];
         document.getElementById("date").value = today;
         loadData();
+        loadLineChart();
       }
     });
 
@@ -201,6 +203,60 @@
             }
           }
         }
+      });
+    }
+
+    function loadLineChart() {
+      db.collection("pesanan").orderBy("waktu").get().then(snapshot => {
+        const menuHarian = {};
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const waktu = new Date(data.waktu);
+          const tanggalStr = waktu.toISOString().split("T")[0];
+
+          if (Array.isArray(data.items)) {
+            data.items.forEach(item => {
+              const nama = item.nama;
+              if (!menuHarian[nama]) menuHarian[nama] = {};
+              menuHarian[nama][tanggalStr] = (menuHarian[nama][tanggalStr] || 0) + 1;
+            });
+          }
+        });
+
+        const tanggalList = [...new Set(Object.values(menuHarian).flatMap(obj => Object.keys(obj)))].sort();
+        const datasets = Object.entries(menuHarian).map(([nama, obj]) => ({
+          label: nama,
+          data: tanggalList.map(tgl => obj[tgl] || 0),
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2
+        }));
+
+        if (chartLine) chartLine.destroy();
+        const ctx = document.getElementById("chart-line").getContext("2d");
+        chartLine = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: tanggalList,
+            datasets
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: 'Tren Penjualan per Menu per Hari'
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                precision: 0
+              }
+            }
+          }
+        });
       });
     }
   </script>
