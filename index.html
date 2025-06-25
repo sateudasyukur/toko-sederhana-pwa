@@ -102,7 +102,7 @@
       const nama = document.getElementById("customer-name").value.trim();
       const total = cart.reduce((sum, item) => sum + item.price, 0);
       const orderData = {
-        waktu: new Date().toISOString(),
+        waktu: new Date(),
         nama: nama,
         total: total,
         items: cart.map(item => ({
