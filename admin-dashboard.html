@@ -1,124 +1,174 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-512.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <meta name="theme-color" content="#ffffff">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Admin Toko">
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
-    }
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Dashboard Admin
+  </title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js">
   </script>
-
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-512.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Admin Toko">
-
-  <title>Dashboard Admin + Nama Pelanggan</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
-    body {
+   body {
       font-family: sans-serif;
-      margin: 0;
-      padding: 2rem;
       background: #f4f4f4;
+      margin: 0;
+      padding: 1rem;
+    }
+    header {
+      background: #4CAF50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
     }
     .container {
-      max-width: 950px;
+      max-width: 1024px;
       margin: auto;
+      padding: 1rem;
       background: white;
-      padding: 2rem;
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    h1 {
+    h2 {
       text-align: center;
-      margin-bottom: 0.5rem;
     }
-    h3, h4 {
-      text-align: center;
-      margin-top: 0.2rem;
-      color: #4CAF50;
-    }
-    .filter {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .filter input {
-      padding: 6px;
-      font-size: 14px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background: #eee;
-    }
-    .logout-btn {
+    .section {
       margin-top: 2rem;
-      background: #d9534f;
+    }
+    canvas {
+      max-width: 100%;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 1rem;
+    }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .nav a {
+      padding: 12px 20px;
+      background: #4CAF50;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .nav a:hover {
+      background: #388e3c;
+    }
+    .logout {
+      text-align: center;
+      margin-top: 2rem;
+    }
+    .logout button {
+      padding: 10px 20px;
+      background: #e53935;
       color: white;
       border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .logout-btn:hover {
-      background: #c9302c;
     }
   </style>
-</head>
-<body>
+ </head>
+ <body>
+  <nav style="background:#f4f4f4;padding:10px;border-radius:8px;margin-bottom:20px;">
+   <strong>
+    📊 Navigasi Admin
+   </strong>
+   <br/>
+   <br/>
+   <a href="admin-dashboard.html">
+    🏠 Dashboard
+   </a>
+   <br/>
+   <a href="admin-laporan.html">
+    🧾 Laporan Penjualan
+   </a>
+   <br/>
+   <a href="admin-laporan-excel.html">
+    📥 Export Excel
+   </a>
+   <br/>
+   <a href="admin-laporan-grafik.html">
+    📈 Grafik Penjualan
+   </a>
+   <br/>
+   <a href="admin-menu.html">
+    🍱 Kelola Menu
+   </a>
+   <br/>
+   <a href="admin-users.html">
+    👥 Kelola Admin
+   </a>
+   <br/>
+   <a href="admin-login.html" onclick="firebase.auth().signOut()">
+    🚪 Logout
+   </a>
+  </nav>
+  <header>
+   <h1>
+    Dashboard Admin
+   </h1>
+  </header>
   <div class="container">
-    <h1>Dashboard Admin</h1>
-    <div class="filter">
-      <label for="tanggal">Filter Tanggal: </label>
-      <input type="date" id="tanggal" onchange="filterTanggal()" />
-      <button onclick="resetFilter()">Tampilkan Semua</button>
-    </div>
-    <h3 id="total-income">Total Pendapatan: Rp 0</h3>
-    <h4 id="terlaris">Menu Terlaris: -</h4>
-    <table id="pesanan-table">
-      <thead>
-        <tr>
-          <th>Waktu</th>
-          <th>Nama Pelanggan</th>
-          <th>Total</th>
-          <th>Menu</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+   <div class="nav">
+    <a href="admin-laporan-excel.html">
+     📊 Laporan Penjualan
+    </a>
+    <a href="admin-pesanan.html">
+     🧾 Daftar Pesanan
+    </a>
+    <a href="admin-users.html">
+     👥 Kelola Admin
+    </a>
+    <a href="admin-menu.html">
+     📋 Kelola Menu
+    </a>
+   </div>
+   <div class="section">
+    <h2>
+     📈 Grafik Pendapatan per Jam (Hari Ini)
+    </h2>
+    <canvas height="250" id="grafikJam">
+    </canvas>
+   </div>
+   <div class="section">
+    <h2>
+     🔥 Menu Terlaris Hari Ini
+    </h2>
+    <canvas height="250" id="grafikTerlaris">
+    </canvas>
+   </div>
+   <div class="section">
+    <h2>
+     📊 Tren Penjualan per Menu (7 Hari Terakhir)
+    </h2>
+    <canvas height="300" id="grafikTrend">
+    </canvas>
+   </div>
+   <div class="logout">
+    <button onclick="logout()">
+     🚪 Logout
+    </button>
+   </div>
   </div>
-
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js">
+  </script>
   <script>
-    const firebaseConfig = {
+   const firebaseConfig = {
       apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
       authDomain: "uda-syukur.firebaseapp.com",
       projectId: "uda-syukur"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -126,7 +176,7 @@
       if (!user) {
         window.location.href = "admin-login.html";
       } else {
-        loadAll();
+        loadCharts();
       }
     });
 
@@ -136,70 +186,83 @@
       });
     }
 
-    function renderPesanan(snapshot) {
-      const tbody = document.querySelector("#pesanan-table tbody");
-      const totalIncomeEl = document.getElementById("total-income");
-      const terlarisEl = document.getElementById("terlaris");
-      tbody.innerHTML = "";
-      let totalPendapatan = 0;
-      let countMenu = {};
+    function loadCharts() {
+      const now = new Date();
+      const todayStr = now.toISOString().split("T")[0];
 
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const row = document.createElement("tr");
-        const waktu = new Date(data.waktu).toLocaleString("id-ID");
-        const nama = data.nama || "-";
-        const total = data.total || 0;
-        const items = (data.items || []).map(i => {
-          countMenu[i.nama] = (countMenu[i.nama] || 0) + 1;
-          return i.nama;
-        }).join(", ");
+      const byHour = {};
+      const byMenu = {};
+      const byMenuTrend = {};
 
-        row.innerHTML = `<td>${waktu}</td><td>${nama}</td><td>Rp ${total.toLocaleString("id-ID")}</td><td>${items}</td>`;
-        tbody.appendChild(row);
-        totalPendapatan += total;
-      });
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 6);
+      const startStr = startDate.toISOString().split("T")[0];
 
-      totalIncomeEl.textContent = "Total Pendapatan: Rp " + totalPendapatan.toLocaleString("id-ID");
+      db.collection("pesanan").orderBy("waktu").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const waktu = new Date(data.waktu);
+          const jam = waktu.getHours();
+          const tanggal = waktu.toISOString().split("T")[0];
 
-      let terlaris = "-";
-      let max = 0;
-      for (const [menu, count] of Object.entries(countMenu)) {
-        if (count > max) {
-          max = count;
-          terlaris = `${menu} (${count}x)`;
-        }
-      }
-      terlarisEl.textContent = "Menu Terlaris: " + terlaris;
-    }
+          if (tanggal === todayStr) {
+            byHour[jam] = (byHour[jam] || 0) + data.total;
+            data.items.forEach(i => {
+              byMenu[i.nama] = (byMenu[i.nama] || 0) + 1;
+            });
+          }
 
-    function loadAll() {
-      db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
-        renderPesanan(snapshot);
-      });
-    }
-
-    function filterTanggal() {
-      const tanggalInput = document.getElementById("tanggal").value;
-      if (!tanggalInput) return loadAll();
-
-      const tanggalAwal = new Date(tanggalInput + "T00:00:00");
-      const tanggalAkhir = new Date(tanggalInput + "T23:59:59");
-
-      db.collection("pesanan")
-        .where("waktu", ">=", tanggalAwal.toISOString())
-        .where("waktu", "<=", tanggalAkhir.toISOString())
-        .orderBy("waktu", "desc")
-        .get()
-        .then(snapshot => {
-          renderPesanan(snapshot);
+          if (tanggal >= startStr) {
+            data.items.forEach(i => {
+              const key = i.nama + "|" + tanggal;
+              byMenuTrend[key] = (byMenuTrend[key] || 0) + 1;
+            });
+          }
         });
-    }
 
-    function resetFilter() {
-      document.getElementById("tanggal").value = "";
-      loadAll();
+        const jamLabels = Array.from({length: 24}, (_, i) => i + ":00");
+        const jamData = jamLabels.map(j => byHour[j.split(":")[0]] || 0);
+        new Chart(document.getElementById("grafikJam"), {
+          type: "bar",
+          data: {
+            labels: jamLabels,
+            datasets: [{ label: "Rp", data: jamData, backgroundColor: "#4CAF50" }]
+          }
+        });
+
+        const menuLabels = Object.keys(byMenu);
+        const menuData = menuLabels.map(k => byMenu[k]);
+        new Chart(document.getElementById("grafikTerlaris"), {
+          type: "bar",
+          data: {
+            labels: menuLabels,
+            datasets: [{ label: "Jumlah", data: menuData, backgroundColor: "#FF9800" }]
+          }
+        });
+
+        const dates = [];
+        for (let d = new Date(startDate); d <= now; d.setDate(d.getDate() + 1)) {
+          dates.push(d.toISOString().split("T")[0]);
+        }
+
+        const menuNames = [...new Set(Object.keys(byMenuTrend).map(k => k.split("|")[0]))];
+        const trendDatasets = menuNames.map(nama => ({
+          label: nama,
+          data: dates.map(tgl => byMenuTrend[nama + "|" + tgl] || 0),
+          fill: false,
+          borderColor: "#" + Math.floor(Math.random()*16777215).toString(16),
+          tension: 0.1
+        }));
+
+        new Chart(document.getElementById("grafikTrend"), {
+          type: "line",
+          data: {
+            labels: dates,
+            datasets: trendDatasets
+          }
+        });
+      });
     }
   </script>
-</body>
+ </body>
 </html>
