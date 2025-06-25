@@ -3,7 +3,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Laporan Penjualan</title>
   <style>
     body {
@@ -12,15 +12,12 @@
       max-width: 960px;
       margin: auto;
     }
-    h1 {
-      text-align: center;
-    }
+    h1 { text-align: center; }
     .filter {
       margin: 1rem 0;
       display: flex;
       gap: 10px;
       align-items: center;
-      flex-wrap: wrap;
     }
     table {
       width: 100%;
@@ -32,9 +29,7 @@
       padding: 8px;
       font-size: 14px;
     }
-    th {
-      background: #f0f0f0;
-    }
+    th { background: #f0f0f0; }
     .total {
       margin-top: 1rem;
       text-align: right;
@@ -54,26 +49,25 @@
   <h1>Laporan Penjualan</h1>
 
   <div class="filter">
-    <label for="filter-date">Tanggal:</label>
-    <input type="date" id="filter-date" />
-    <button onclick="loadData()">Tampilkan</button>
-    <button onclick="exportToExcel()">📥 Export Excel</button>
+    <label for="tanggal">Tanggal:</label>
+    <input type="date" id="tanggal" />
+    <button onclick="tampilkan()">Tampilkan</button>
+    <button onclick="exportToExcel()">📥 Download Excel</button>
   </div>
 
-  <table id="report-table">
+  <table>
     <thead>
       <tr><th>Tanggal</th><th>Nama</th><th>Item</th><th>Total</th></tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="tbody"></tbody>
   </table>
 
   <div class="total">Total Pendapatan: Rp <span id="total">0</span></div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
   <!-- SheetJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -86,67 +80,66 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let cachedData = [];
+    let cache = [];
 
     firebase.auth().onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "admin-login.html";
-      } else {
+      if (!user) window.location.href = "admin-login.html";
+      else {
         const today = new Date().toISOString().split("T")[0];
-        document.getElementById("filter-date").value = today;
-        loadData();
+        document.getElementById("tanggal").value = today;
+        tampilkan();
       }
     });
 
-    function loadData() {
-      const tbody = document.querySelector("tbody");
+    function tampilkan() {
+      const tanggal = document.getElementById("tanggal").value;
+      if (!tanggal) return alert("Pilih tanggal.");
+
+      const start = new Date(tanggal + "T00:00:00");
+      const end = new Date(tanggal + "T23:59:59");
+      const tbody = document.getElementById("tbody");
       const totalEl = document.getElementById("total");
-      const filterDate = document.getElementById("filter-date").value;
       tbody.innerHTML = "";
       let total = 0;
-      cachedData = [];
+      cache = [];
 
-      db.collection("pesanan").orderBy("waktu").get().then(snapshot => {
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const waktu = new Date(data.waktu);
-          const tanggalStr = waktu.toISOString().split("T")[0];
-          if (tanggalStr !== filterDate) return;
-
-          const items = data.items.map(i => i.nama + " (" + i.harga + ")").join(", ");
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${tanggalStr}</td>
-            <td>${data.nama || "-"}</td>
-            <td>${items}</td>
-            <td>Rp ${data.total.toLocaleString("id-ID")}</td>
-          `;
-          tbody.appendChild(tr);
-          total += data.total;
-
-          cachedData.push({
-            Tanggal: tanggalStr,
-            Nama: data.nama || "-",
-            Item: items,
-            Total: data.total
+      db.collection("pesanan").where("waktu", ">=", start).where("waktu", "<=", end).orderBy("waktu")
+        .get().then(snapshot => {
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const waktu = new Date(data.waktu);
+            if (isNaN(waktu.getTime())) return;
+            const tanggalStr = waktu.toISOString().split("T")[0];
+            const items = data.items.map(i => i.nama + " (" + i.harga + ")").join(", ");
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${tanggalStr}</td>
+              <td>${data.nama || "-"}</td>
+              <td>${items}</td>
+              <td>Rp ${data.total.toLocaleString("id-ID")}</td>
+            `;
+            tbody.appendChild(tr);
+            total += data.total;
+            cache.push({
+              Tanggal: tanggalStr,
+              Nama: data.nama || "-",
+              Item: items,
+              Total: data.total
+            });
           });
+          totalEl.textContent = total.toLocaleString("id-ID");
         });
-        totalEl.textContent = total.toLocaleString("id-ID");
-      });
     }
 
     function exportToExcel() {
-      if (cachedData.length === 0) {
+      if (cache.length === 0) {
         alert("Tidak ada data untuk diekspor.");
         return;
       }
-
-      const worksheet = XLSX.utils.json_to_sheet(cachedData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan");
-
-      const tanggal = document.getElementById("filter-date").value || "laporan";
-      XLSX.writeFile(workbook, "laporan-penjualan-" + tanggal + ".xlsx");
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(cache);
+      XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+      XLSX.writeFile(wb, "laporan-penjualan.xlsx");
     }
   </script>
 </body>
