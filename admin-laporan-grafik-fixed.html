@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Grafik Penjualan
+  </title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js">
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js">
+  </script>
+  <style>
+   body {
+      font-family: sans-serif;
+      padding: 1rem;
+      max-width: 960px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    canvas {
+      margin-top: 30px;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    .filter {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .filter input {
+      padding: 8px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js">
+  </script>
+ </head>
+ <body>
+  <h1>
+   📈 Grafik Penjualan
+  </h1>
+  <div class="filter">
+   <label for="date">
+    Pilih Tanggal:
+   </label>
+   <input id="date" onchange="loadData()" type="date"/>
+  </div>
+  <canvas height="100" id="chart-total">
+  </canvas>
+  <canvas height="100" id="chart-menu">
+  </canvas>
+  <script>
+   const firebaseConfig = {
+      apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
+      authDomain: "uda-syukur.firebaseapp.com",
+      projectId: "uda-syukur"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let chartTotal, chartMenu;
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "admin-login.html";
+      } else {
+        const today = new Date().toISOString().split("T")[0];
+        document.getElementById("date").value = today;
+        loadData();
+      }
+    });
+
+    function loadData() {
+      const date = document.getElementById("date").value;
+      if (!date) return;
+
+      db.collection("pesanan").orderBy("waktu").get().then(snapshot => {
+        const perJam = {};
+        const perMenu = {};
+        const pelangganSet = new Set();
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const waktu = new Date(data.waktu);
+          const tanggalStr = waktu.toISOString().split("T")[0];
+          if (tanggalStr !== date) return;
+
+          const jam = waktu.getHours();
+          const keyJam = jam + ":00";
+          perJam[keyJam] = (perJam[keyJam] || 0) + data.total;
+
+          if (data.nama) pelangganSet.add(data.nama);
+
+          if (Array.isArray(data.items)) {
+            data.items.forEach(item => {
+              perMenu[item.nama] = (perMenu[item.nama] || 0) + 1;
+            });
+          }
+        });
+
+        updateChartTotal(perJam, pelangganSet.size);
+        updateChartMenu(perMenu);
+      });
+    }
+
+    function updateChartTotal(perJam, jumlahPelanggan) {
+      const labels = Object.keys(perJam).sort((a,b) => parseInt(a) - parseInt(b));
+      const data = labels.map(k => perJam[k]);
+
+      if (chartTotal) chartTotal.destroy();
+      const ctx = document.getElementById("chart-total").getContext("2d");
+      chartTotal = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Total Pendapatan per Jam (Rp)',
+            data,
+            backgroundColor: '#4CAF50'
+          }]
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Total Pendapatan / Jam (Jumlah Pelanggan: ' + jumlahPelanggan + ')'
+            }
+          },
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: val => 'Rp ' + val.toLocaleString("id-ID")
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateChartMenu(perMenu) {
+      const labels = Object.keys(perMenu);
+      const data = labels.map(k => perMenu[k]);
+
+      if (chartMenu) chartMenu.destroy();
+      const ctx = document.getElementById("chart-menu").getContext("2d");
+      chartMenu = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Jumlah Pembelian per Menu',
+            data,
+            backgroundColor: '#03A9F4'
+          }]
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Menu Terlaris per Hari'
+            }
+          },
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              precision: 0
+            }
+          }
+        }
+      });
+    }
+  </script>
+  <canvas height="400" id="grafik" width="600">
+  </canvas>
+  <script>
+   const firebaseConfig = {
+  apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
+  authDomain: "uda-syukur.firebaseapp.com",
+  projectId: "uda-syukur"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+firebase.auth().onAuthStateChanged(user => {
+  if (!user) return location.href = "admin-login.html";
+  ambilData();
+});
+
+function ambilData() {
+  db.collection("pesanan").orderBy("waktu").get().then(snap => {
+    const dataPerHari = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (!d.waktu || !d.items) return;
+      const tgl = d.waktu.toDate().toISOString().split("T")[0];
+      if (!dataPerHari[tgl]) dataPerHari[tgl] = {};
+      d.items.forEach(item => {
+        if (!dataPerHari[tgl][item.nama]) dataPerHari[tgl][item.nama] = 0;
+        dataPerHari[tgl][item.nama]++;
+      });
+    });
+
+    const labels = Object.keys(dataPerHari).sort();
+    const menuSet = new Set();
+    labels.forEach(tgl => {
+      Object.keys(dataPerHari[tgl]).forEach(menu => menuSet.add(menu));
+    });
+    const menus = Array.from(menuSet);
+
+    const datasets = menus.map(menu => ({
+      label: menu,
+      data: labels.map(tgl => dataPerHari[tgl][menu] || 0),
+      fill: false,
+      borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+      tension: 0.1
+    }));
+
+    new Chart(document.getElementById("grafik"), {
+      type: "line",
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "bottom" }, title: { display: true, text: "Grafik Penjualan per Hari" }}
+      }
+    });
+  });
+}
+  </script>
+ </body>
+</html>
