@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Toko Sederhana
+  </title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js">
+  </script>
+  <style>
+   body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 1rem;
+    }
+    h1 {
+      text-align: center;
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 1rem;
+    }
+    .menu-card {
+      background: white;
+      padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .menu-card button {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #cart {
+      margin-top: 2rem;
+      background: white;
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+  </style>
+  <link href="favicon.ico" rel="icon" type="image/x-icon"/>
+ </head>
+ <body>
+  <h1>
+   MENU HARI INI
+  </h1>
+  <div class="menu-grid" id="products">
+  </div>
+  <div id="cart">
+   <h2>
+    Keranjang Belanja
+   </h2>
+   <input id="customer-name" placeholder="Nama Pelanggan (opsional)" type="text"/>
+   <ul id="cart-items">
+   </ul>
+   <p>
+    Total: Rp
+    <span id="total">
+     0
+    </span>
+   </p>
+   <button onclick="checkout()">
+    Checkout
+   </button>
+   <p id="notif" style="color: green;">
+   </p>
+  </div>
+  <script>
+   const firebaseConfig = {
+      apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
+      authDomain: "uda-syukur.firebaseapp.com",
+      projectId: "uda-syukur"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let products = [];
+    let cart = [];
+
+    function renderCart() {
+      const cartItems = document.getElementById("cart-items");
+      cartItems.innerHTML = "";
+      let total = 0;
+      cart.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item.name + " - Rp " + item.price.toLocaleString("id-ID");
+        cartItems.appendChild(li);
+        total += item.price;
+      });
+      document.getElementById("total").textContent = total.toLocaleString("id-ID");
+    }
+
+    function addToCart(id) {
+      const product = products.find(p => p.id === id);
+      if (product) {
+        cart.push(product);
+        renderCart();
+      }
+    }
+
+    function checkout() {
+      const nama = document.getElementById("customer-name").value.trim();
+      const total = cart.reduce((sum, item) => sum + item.price, 0);
+      const orderData = {
+        waktu: new Date(),
+        nama: nama,
+        total: total,
+        items: cart.map(item => ({
+          nama: item.name,
+          harga: item.price
+        }))
+      };
+
+      db.collection("pesanan").add(orderData)
+        .then(() => {
+          document.getElementById("notif").textContent = "✅ Pesanan berhasil disimpan!";
+          cart = [];
+          renderCart();
+          document.getElementById("customer-name").value = "";
+        })
+        .catch((error) => {
+          document.getElementById("notif").textContent = "❌ Gagal menyimpan pesanan: " + error.message;
+        });
+    }
+
+    function renderProducts() {
+      const container = document.getElementById("products");
+      container.innerHTML = "";
+      products.forEach(product => {
+        const div = document.createElement("div");
+        div.className = "menu-card";
+        div.innerHTML = `
+          <h3>${product.name}</h3>
+          <p>Harga: Rp ${product.price.toLocaleString("id-ID")}</p>
+          <button onclick="addToCart('${product.id}')">Tambah ke Keranjang</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    db.collection("menu").orderBy("name").get().then(snapshot => {
+      products = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      renderProducts();
+    });
+  </script>
+ </body>
+</html>
