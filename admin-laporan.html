@@ -1,12 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Laporan Penjualan</title>
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Laporan Penjualan
+  </title>
   <style>
-    body {
+   body {
       font-family: sans-serif;
       padding: 1rem;
       max-width: 960px;
@@ -44,35 +45,62 @@
       cursor: pointer;
     }
   </style>
-</head>
-<body>
-  <h1>Laporan Penjualan</h1>
-
+  <link href="favicon.ico" rel="icon" type="image/x-icon"/>
+ </head>
+ <body>
+  <h1>
+   Laporan Penjualan
+  </h1>
   <div class="filter">
-    <label for="tanggal">Tanggal:</label>
-    <input type="date" id="tanggal" />
-    <button onclick="tampilkan()">Tampilkan</button>
-    <button onclick="exportToExcel()">📥 Download Excel</button>
+   <label for="tanggal">
+    Tanggal:
+   </label>
+   <input id="tanggal" type="date"/>
+   <button onclick="tampilkan()">
+    Tampilkan
+   </button>
+   <button onclick="exportToExcel()">
+    📥 Download Excel
+   </button>
   </div>
-
   <table>
-    <thead>
-      <tr><th>Tanggal</th><th>Nama</th><th>Item</th><th>Total</th></tr>
-    </thead>
-    <tbody id="tbody"></tbody>
+   <thead>
+    <tr>
+     <th>
+      Tanggal
+     </th>
+     <th>
+      Nama
+     </th>
+     <th>
+      Item
+     </th>
+     <th>
+      Total
+     </th>
+    </tr>
+   </thead>
+   <tbody id="tbody">
+   </tbody>
   </table>
-
-  <div class="total">Total Pendapatan: Rp <span id="total">0</span></div>
-
+  <div class="total">
+   Total Pendapatan: Rp
+   <span id="total">
+    0
+   </span>
+  </div>
   <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js">
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js">
+  </script>
   <!-- SheetJS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+  </script>
   <script>
-    const firebaseConfig = {
+   const firebaseConfig = {
       apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
       authDomain: "uda-syukur.firebaseapp.com",
       projectId: "uda-syukur"
@@ -142,5 +170,5 @@
       XLSX.writeFile(wb, "laporan-penjualan.xlsx");
     }
   </script>
-</body>
+ </body>
 </html>
