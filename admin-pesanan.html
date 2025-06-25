@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daftar Pesanan</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      max-width: 960px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      font-size: 14px;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    .total {
+      margin-top: 1rem;
+      text-align: right;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Daftar Pesanan</h1>
+  <table id="tabel">
+    <thead>
+      <tr><th>Tanggal</th><th>Nama</th><th>Item</th><th>Total</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
+      authDomain: "uda-syukur.firebaseapp.com",
+      projectId: "uda-syukur"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "admin-login.html";
+      } else {
+        muatData();
+      }
+    });
+
+    function muatData() {
+      const tbody = document.querySelector("tbody");
+      tbody.innerHTML = "";
+      db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const waktu = new Date(data.waktu);
+          const tanggal = waktu.toISOString().split("T")[0];
+          const items = data.items.map(i => i.nama + " (" + i.harga + ")").join(", ");
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${tanggal}</td>
+            <td>${data.nama || "-"}</td>
+            <td>${items}</td>
+            <td>Rp ${data.total.toLocaleString("id-ID")}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

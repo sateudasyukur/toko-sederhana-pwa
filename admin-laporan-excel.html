@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Laporan Penjualan</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      max-width: 960px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .filter {
+      margin: 1rem 0;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      font-size: 14px;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    .total {
+      margin-top: 1rem;
+      text-align: right;
+      font-weight: bold;
+    }
+    button {
+      padding: 8px 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Laporan Penjualan</h1>
+
+  <div class="filter">
+    <label for="tanggal">Tanggal:</label>
+    <input type="date" id="tanggal" />
+    <button onclick="loadData()">Tampilkan</button>
+    <button onclick="exportToExcel()">📥 Download Excel</button>
+  </div>
+
+  <table id="tabel">
+    <thead>
+      <tr><th>Tanggal</th><th>Nama</th><th>Item</th><th>Total</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="total">Total Pendapatan: Rp <span id="total">0</span></div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <!-- SheetJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
+      authDomain: "uda-syukur.firebaseapp.com",
+      projectId: "uda-syukur"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let dataCache = [];
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "admin-login.html";
+      } else {
+        const today = new Date().toISOString().split("T")[0];
+        document.getElementById("tanggal").value = today;
+        loadData();
+      }
+    });
+
+    function loadData() {
+      const tgl = document.getElementById("tanggal").value;
+      const tbody = document.querySelector("tbody");
+      const totalEl = document.getElementById("total");
+      tbody.innerHTML = "";
+      let total = 0;
+      dataCache = [];
+
+      db.collection("pesanan").orderBy("waktu").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const waktu = new Date(data.waktu);
+          const tanggal = waktu.toISOString().split("T")[0];
+          if (tanggal !== tgl) return;
+
+          const items = data.items.map(i => i.nama + " (" + i.harga + ")").join(", ");
+          const tr = document.createElement("tr");
+          tr.innerHTML = \`
+            <td>\${tanggal}</td>
+            <td>\${data.nama || "-"}</td>
+            <td>\${items}</td>
+            <td>Rp \${data.total.toLocaleString("id-ID")}</td>
+          \`;
+          tbody.appendChild(tr);
+          total += data.total;
+
+          dataCache.push({
+            Tanggal: tanggal,
+            Nama: data.nama || "-",
+            Item: items,
+            Total: data.total
+          });
+        });
+        totalEl.textContent = total.toLocaleString("id-ID");
+      });
+    }
+
+    function exportToExcel() {
+      if (dataCache.length === 0) {
+        alert("Tidak ada data untuk diekspor.");
+        return;
+      }
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(dataCache);
+      XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+      XLSX.writeFile(wb, "laporan-penjualan.xlsx");
+    }
+  </script>
+</body>
+</html>
