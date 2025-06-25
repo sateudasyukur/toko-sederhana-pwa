@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Daftar Pesanan</title>
+  <title>Daftar Pesanan per Tanggal</title>
   <style>
     body {
       font-family: sans-serif;
@@ -14,6 +14,12 @@
     }
     h1 {
       text-align: center;
+    }
+    .filter {
+      margin: 1rem 0;
+      display: flex;
+      gap: 10px;
+      align-items: center;
     }
     table {
       width: 100%;
@@ -33,16 +39,32 @@
       text-align: right;
       font-weight: bold;
     }
+    button {
+      padding: 6px 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <h1>Daftar Pesanan</h1>
+  <div class="filter">
+    <label for="tanggal">Tanggal:</label>
+    <input type="date" id="tanggal" />
+    <button onclick="loadPesanan()">Tampilkan</button>
+  </div>
+
   <table id="tabel">
     <thead>
       <tr><th>Tanggal</th><th>Nama</th><th>Item</th><th>Total</th></tr>
     </thead>
     <tbody></tbody>
   </table>
+
+  <div class="total">Total Pendapatan: Rp <span id="total">0</span></div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -61,18 +83,26 @@
       if (!user) {
         window.location.href = "admin-login.html";
       } else {
-        muatData();
+        const today = new Date().toISOString().split("T")[0];
+        document.getElementById("tanggal").value = today;
+        loadPesanan();
       }
     });
 
-    function muatData() {
+    function loadPesanan() {
+      const tgl = document.getElementById("tanggal").value;
       const tbody = document.querySelector("tbody");
+      const totalEl = document.getElementById("total");
       tbody.innerHTML = "";
+      let total = 0;
+
       db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
         snapshot.forEach(doc => {
           const data = doc.data();
           const waktu = new Date(data.waktu);
           const tanggal = waktu.toISOString().split("T")[0];
+          if (tanggal !== tgl) return;
+
           const items = data.items.map(i => i.nama + " (" + i.harga + ")").join(", ");
           const tr = document.createElement("tr");
           tr.innerHTML = `
@@ -82,7 +112,9 @@
             <td>Rp ${data.total.toLocaleString("id-ID")}</td>
           `;
           tbody.appendChild(tr);
+          total += data.total;
         });
+        totalEl.textContent = total.toLocaleString("id-ID");
       });
     }
   </script>
