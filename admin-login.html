@@ -89,7 +89,7 @@
 
       firebase.auth().signInWithEmailAndPassword(email, password)
         .then(() => {
-          window.location.href = "admin-dashboard-multipengguna.html";
+          window.location.href = "admin-dashboard.html";
         })
         .catch(error => {
           alert("Login gagal: " + error.message);
