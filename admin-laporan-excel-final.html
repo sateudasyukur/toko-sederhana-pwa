@@ -108,6 +108,7 @@
           snapshot.forEach(doc => {
             const data = doc.data();
             const waktu = new Date(data.waktu);
+            if (isNaN(waktu.getTime())) return;
             const tanggalStr = waktu.toISOString().split("T")[0];
             const items = data.items.map(i => i.nama + " (" + i.harga + ")").join(", ");
             const tr = document.createElement("tr");
