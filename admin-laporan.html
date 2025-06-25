@@ -7,15 +7,23 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.33/jspdf.plugin.autotable.min.js"></script>
   <style>
     body {
       font-family: sans-serif;
       padding: 1rem;
-      max-width: 900px;
+      max-width: 960px;
       margin: auto;
     }
     h1 {
       text-align: center;
+    }
+    .filter {
+      margin: 1rem 0;
+      display: flex;
+      gap: 10px;
+      align-items: center;
     }
     table {
       width: 100%;
@@ -25,23 +33,23 @@
     th, td {
       border: 1px solid #ccc;
       padding: 8px;
+      font-size: 14px;
     }
     th {
       background: #f0f0f0;
     }
-    .filter {
-      margin: 1rem 0;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    .filter input {
-      padding: 5px;
-    }
     .total {
-      font-weight: bold;
       margin-top: 1rem;
       text-align: right;
+      font-weight: bold;
+    }
+    button {
+      padding: 8px 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -49,21 +57,17 @@
   <h1>Laporan Penjualan</h1>
 
   <div class="filter">
-    <label>Filter tanggal: </label>
+    <label for="filter-date">Tanggal:</label>
     <input type="date" id="filter-date" />
     <button onclick="loadData()">Tampilkan</button>
+    <button onclick="exportPDF()">📄 Export PDF</button>
   </div>
 
-  <table>
+  <table id="report-table">
     <thead>
-      <tr>
-        <th>Tanggal</th>
-        <th>Nama Pelanggan</th>
-        <th>Item</th>
-        <th>Total (Rp)</th>
-      </tr>
+      <tr><th>Tanggal</th><th>Nama</th><th>Item</th><th>Total</th></tr>
     </thead>
-    <tbody id="table-body"></tbody>
+    <tbody></tbody>
   </table>
 
   <div class="total">Total Pendapatan: Rp <span id="total">0</span></div>
@@ -77,42 +81,73 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    let cachedData = [];
+
     firebase.auth().onAuthStateChanged(user => {
       if (!user) {
         window.location.href = "admin-login.html";
       } else {
+        const today = new Date().toISOString().split("T")[0];
+        document.getElementById("filter-date").value = today;
         loadData();
       }
     });
 
     function loadData() {
-      const tbody = document.getElementById("table-body");
+      const tbody = document.querySelector("tbody");
       const totalEl = document.getElementById("total");
       const filterDate = document.getElementById("filter-date").value;
       tbody.innerHTML = "";
       let total = 0;
+      cachedData = [];
 
-      db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
+      db.collection("pesanan").orderBy("waktu").get().then(snapshot => {
         snapshot.forEach(doc => {
           const data = doc.data();
           const waktu = new Date(data.waktu);
           const tanggalStr = waktu.toISOString().split("T")[0];
+          if (tanggalStr !== filterDate) return;
 
-          if (filterDate && tanggalStr !== filterDate) return;
-
-          const row = document.createElement("tr");
-          const items = data.items.map(i => `${i.nama} (${i.harga})`).join(", ");
-          row.innerHTML = `
+          const items = data.items.map(i => i.nama + " (" + i.harga + ")").join(", ");
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
             <td>${tanggalStr}</td>
             <td>${data.nama || "-"}</td>
             <td>${items}</td>
             <td>Rp ${data.total.toLocaleString("id-ID")}</td>
           `;
+          tbody.appendChild(tr);
           total += data.total;
-          tbody.appendChild(row);
+
+          cachedData.push({
+            tanggal: tanggalStr,
+            nama: data.nama || "-",
+            items: items,
+            total: data.total
+          });
         });
         totalEl.textContent = total.toLocaleString("id-ID");
       });
+    }
+
+    async function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(14);
+      doc.text("Laporan Penjualan - " + document.getElementById("filter-date").value, 14, 14);
+
+      const headers = ["Tanggal", "Nama", "Item", "Total"];
+      const rows = cachedData.map(d => [d.tanggal, d.nama, d.items, "Rp " + d.total.toLocaleString("id-ID")]);
+
+      doc.autoTable({
+        head: [headers],
+        body: rows,
+        startY: 20,
+        styles: { fontSize: 10, cellWidth: 'wrap' },
+        headStyles: { fillColor: [76, 175, 80] }
+      });
+
+      doc.save("laporan-penjualan.pdf");
     }
   </script>
 </body>
