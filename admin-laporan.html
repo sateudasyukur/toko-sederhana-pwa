@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Laporan Penjualan</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -58,7 +58,7 @@
 
   <div class="filter">
     <label for="filter-date">Tanggal:</label>
-    <input type="date" id="filter-date" />
+    <input type="date" id="filter-date">
     <button onclick="loadData()">Tampilkan</button>
     <button onclick="exportPDF()">📄 Export PDF</button>
   </div>
@@ -131,10 +131,15 @@
     }
 
     async function exportPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert("jsPDF gagal dimuat. Periksa koneksi internet.");
+        return;
+      }
+
+      const doc = new window.jspdf.jsPDF();
+      const tanggal = document.getElementById("filter-date").value;
       doc.setFontSize(14);
-      doc.text("Laporan Penjualan - " + document.getElementById("filter-date").value, 14, 14);
+      doc.text("Laporan Penjualan - " + tanggal, 14, 14);
 
       const headers = ["Tanggal", "Nama", "Item", "Total"];
       const rows = cachedData.map(d => [d.tanggal, d.nama, d.items, "Rp " + d.total.toLocaleString("id-ID")]);
@@ -143,11 +148,11 @@
         head: [headers],
         body: rows,
         startY: 20,
-        styles: { fontSize: 10, cellWidth: 'wrap' },
+        styles: { fontSize: 10 },
         headStyles: { fillColor: [76, 175, 80] }
       });
 
-      doc.save("laporan-penjualan.pdf");
+      doc.save("laporan-penjualan-" + tanggal + ".pdf");
     }
   </script>
 </body>
