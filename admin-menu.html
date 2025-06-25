@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kelola Menu</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 1rem;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    input {
+      flex: 1;
+      padding: 8px;
+    }
+    button {
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+    td:last-child {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Kelola Menu</h1>
+
+  <form id="menu-form" onsubmit="addMenu(event)">
+    <input type="text" id="name" placeholder="Nama menu" required />
+    <input type="number" id="price" placeholder="Harga (Rp)" required />
+    <button type="submit">Tambah</button>
+  </form>
+
+  <table id="menu-table">
+    <thead>
+      <tr>
+        <th>Nama</th>
+        <th>Harga</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
+      authDomain: "uda-syukur.firebaseapp.com",
+      projectId: "uda-syukur"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const form = document.getElementById("menu-form");
+    const tbody = document.querySelector("#menu-table tbody");
+
+    function renderMenu(doc) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${doc.data().name}</td>
+        <td>Rp ${doc.data().price.toLocaleString("id-ID")}</td>
+        <td>
+          <button onclick="deleteMenu('${doc.id}')">❌ Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function loadMenu() {
+      tbody.innerHTML = "";
+      db.collection("menu").orderBy("name").get().then(snapshot => {
+        snapshot.forEach(doc => renderMenu(doc));
+      });
+    }
+
+    function addMenu(e) {
+      e.preventDefault();
+      const name = form.name.value.trim();
+      const price = parseInt(form.price.value.trim());
+      if (!name || isNaN(price)) return;
+      db.collection("menu").add({ name, price }).then(() => {
+        form.reset();
+        loadMenu();
+      });
+    }
+
+    function deleteMenu(id) {
+      if (confirm("Yakin ingin menghapus menu ini?")) {
+        db.collection("menu").doc(id).delete().then(loadMenu);
+      }
+    }
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        alert("Harus login sebagai admin");
+        window.location.href = "admin-login.html";
+      } else {
+        loadMenu();
+      }
+    });
+  </script>
+</body>
+</html>
