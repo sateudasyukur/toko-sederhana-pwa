@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -19,6 +20,7 @@
       display: flex;
       gap: 10px;
       align-items: center;
+      flex-wrap: wrap;
     }
     table {
       width: 100%;
@@ -55,16 +57,12 @@
     <label for="filter-date">Tanggal:</label>
     <input type="date" id="filter-date" />
     <button onclick="loadData()">Tampilkan</button>
+    <button onclick="exportToExcel()">📥 Export Excel</button>
   </div>
 
   <table id="report-table">
     <thead>
-      <tr>
-        <th>Tanggal</th>
-        <th>Nama</th>
-        <th>Item</th>
-        <th>Total</th>
-      </tr>
+      <tr><th>Tanggal</th><th>Nama</th><th>Item</th><th>Total</th></tr>
     </thead>
     <tbody></tbody>
   </table>
@@ -76,6 +74,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
+  <!-- SheetJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBoERtSGZqnTw5eWD3TOTl9Nog4M4-r4mw",
@@ -84,6 +85,8 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+
+    let cachedData = [];
 
     firebase.auth().onAuthStateChanged(user => {
       if (!user) {
@@ -101,6 +104,7 @@
       const filterDate = document.getElementById("filter-date").value;
       tbody.innerHTML = "";
       let total = 0;
+      cachedData = [];
 
       db.collection("pesanan").orderBy("waktu").get().then(snapshot => {
         snapshot.forEach(doc => {
@@ -119,9 +123,30 @@
           `;
           tbody.appendChild(tr);
           total += data.total;
+
+          cachedData.push({
+            Tanggal: tanggalStr,
+            Nama: data.nama || "-",
+            Item: items,
+            Total: data.total
+          });
         });
         totalEl.textContent = total.toLocaleString("id-ID");
       });
+    }
+
+    function exportToExcel() {
+      if (cachedData.length === 0) {
+        alert("Tidak ada data untuk diekspor.");
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(cachedData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan");
+
+      const tanggal = document.getElementById("filter-date").value || "laporan";
+      XLSX.writeFile(workbook, "laporan-penjualan-" + tanggal + ".xlsx");
     }
   </script>
 </body>
