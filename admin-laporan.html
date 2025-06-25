@@ -8,7 +8,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -60,7 +60,7 @@
     <label for="filter-date">Tanggal:</label>
     <input type="date" id="filter-date" />
     <button onclick="loadData()">Tampilkan</button>
-    <button onclick="exportPDF()">📄 Export PDF</button>
+    <button id="pdfButton">📄 Export PDF</button>
   </div>
 
   <table id="report-table">
@@ -130,7 +130,12 @@
       });
     }
 
-    function exportPDF() {
+    document.getElementById("pdfButton").addEventListener("click", function () {
+      if (typeof jsPDF === "undefined" || typeof jsPDF === "function" && typeof jsPDF().autoTable !== "function") {
+        alert("jsPDF atau autoTable gagal dimuat. Silakan pastikan koneksi internet aktif dan coba lagi.");
+        return;
+      }
+
       const doc = new jsPDF();
       const tanggal = document.getElementById("filter-date").value || "-";
       const rows = cachedData.map(d => [d.tanggal, d.nama, d.items, "Rp " + d.total.toLocaleString("id-ID")]);
@@ -152,7 +157,7 @@
       });
 
       doc.save("laporan-penjualan-" + tanggal + ".pdf");
-    }
+    });
   </script>
 </body>
 </html>
