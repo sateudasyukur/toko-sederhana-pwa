@@ -3,38 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-512.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <meta name="theme-color" content="#ffffff">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Toko Sederhana">
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
-    }
-  </script>
-
-  <!-- iOS support -->
-  <link rel="apple-touch-icon" href="icon-512.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Toko Syukur">
-
   <title>Toko Sederhana</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
     body {
       font-family: sans-serif;
-      background: #f0f0f0;
+      background: #f4f4f4;
       margin: 0;
       padding: 1rem;
     }
     h1 {
       text-align: center;
-      color: #333;
     }
     .menu-grid {
       display: grid;
@@ -44,14 +24,10 @@
     }
     .menu-card {
       background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       text-align: center;
-    }
-    .menu-card h3 {
-      margin: 10px 0 5px;
-      font-size: 16px;
     }
     .menu-card button {
       background: #28a745;
@@ -60,10 +36,6 @@
       padding: 6px 12px;
       border-radius: 6px;
       cursor: pointer;
-      margin-top: 8px;
-    }
-    .menu-card button:hover {
-      background: #218838;
     }
     #cart {
       margin-top: 2rem;
@@ -74,7 +46,7 @@
     input[type="text"] {
       width: 100%;
       padding: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       border-radius: 5px;
       border: 1px solid #ccc;
     }
@@ -102,32 +74,8 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const products = [
-      { id: 1, name: "Minas Ayam", price: 18000 },
-      { id: 2, name: "Minas Sate", price: 14000 },
-      { id: 3, name: "Minas Telor", price: 14000 },
-      { id: 4, name: "Minas Sate Telor", price: 17000 },
-      { id: 5, name: "Sate Padang Kacang", price: 12000 },
-      { id: 6, name: "Nasi Goreng", price: 13000 },
-      { id: 7, name: "Nasi Goreng Telor", price: 14000 },
-      { id: 8, name: "Minas", price: 10000 },
-      { id: 9, name: "Minuman All Varian", price: 5000 },
-      { id: 10, name: "Mie Goreng Telor", price: 10000 },
-      { id: 11, name: "Mie Goreng Ayam", price: 15000 },
-      { id: 12, name: "Ayam Geprek", price: 10000 },
-      { id: 13, name: "Mie Nasi Putih Ayam", price: 14000 },
-      { id: 14, name: "Mie Nasi Putih Telur", price: 12000 },
-      { id: 15, name: "Mie Rebus", price: 10000 },
-      { id: 16, name: "Mie Rebus Nasi", price: 12000 }
-    ];
-
+    let products = [];
     let cart = [];
-
-    function addToCart(id) {
-      const product = products.find(p => p.id === id);
-      cart.push(product);
-      renderCart();
-    }
 
     function renderCart() {
       const cartItems = document.getElementById("cart-items");
@@ -140,6 +88,14 @@
         total += item.price;
       });
       document.getElementById("total").textContent = total.toLocaleString("id-ID");
+    }
+
+    function addToCart(id) {
+      const product = products.find(p => p.id === id);
+      if (product) {
+        cart.push(product);
+        renderCart();
+      }
     }
 
     function checkout() {
@@ -167,16 +123,27 @@
         });
     }
 
-    const productContainer = document.getElementById("products");
-    products.forEach(product => {
-      const div = document.createElement("div");
-      div.className = "menu-card";
-      div.innerHTML = `
-        <h3>${product.name}</h3>
-        <p>Harga: Rp ${product.price.toLocaleString("id-ID")}</p>
-        <button onclick="addToCart(${product.id})">Tambah ke Keranjang</button>
-      `;
-      productContainer.appendChild(div);
+    function renderProducts() {
+      const container = document.getElementById("products");
+      container.innerHTML = "";
+      products.forEach(product => {
+        const div = document.createElement("div");
+        div.className = "menu-card";
+        div.innerHTML = `
+          <h3>${product.name}</h3>
+          <p>Harga: Rp ${product.price.toLocaleString("id-ID")}</p>
+          <button onclick="addToCart('${product.id}')">Tambah ke Keranjang</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    db.collection("menu").orderBy("name").get().then(snapshot => {
+      products = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      renderProducts();
     });
   </script>
 </body>
