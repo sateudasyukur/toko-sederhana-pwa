@@ -45,7 +45,6 @@
       cursor: pointer;
     }
   </style>
-  <link href="favicon.ico" rel="icon" type="image/x-icon"/>
  </head>
  <body>
   <h1>
@@ -135,7 +134,7 @@
         .get().then(snapshot => {
           snapshot.forEach(doc => {
             const data = doc.data();
-            const waktu = new Date(data.waktu);
+            const waktu = data.waktu.toDate();
             if (isNaN(waktu.getTime())) return;
             const tanggalStr = waktu.toISOString().split("T")[0];
             const items = data.items.map(i => i.nama + " (" + i.harga + ")").join(", ");
