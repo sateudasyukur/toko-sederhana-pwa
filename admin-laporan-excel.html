@@ -55,7 +55,7 @@
   <div class="filter">
     <label for="tanggal">Tanggal:</label>
     <input type="date" id="tanggal" />
-    <button onclick="loadData()">Tampilkan</button>
+    <button id="btnTampil">Tampilkan</button>
     <button onclick="exportToExcel()">📥 Download Excel</button>
   </div>
 
@@ -92,12 +92,11 @@
       } else {
         const today = new Date().toISOString().split("T")[0];
         document.getElementById("tanggal").value = today;
-        loadData();
+        loadData(today);
       }
     });
 
-    function loadData() {
-      const tgl = document.getElementById("tanggal").value;
+    function loadData(selectedDate) {
       const tbody = document.querySelector("tbody");
       const totalEl = document.getElementById("total");
       tbody.innerHTML = "";
@@ -109,7 +108,7 @@
           const data = doc.data();
           const waktu = new Date(data.waktu);
           const tanggal = waktu.toISOString().split("T")[0];
-          if (tanggal !== tgl) return;
+          if (tanggal !== selectedDate) return;
 
           const items = data.items.map(i => i.nama + " (" + i.harga + ")").join(", ");
           const tr = document.createElement("tr");
@@ -132,6 +131,12 @@
         totalEl.textContent = total.toLocaleString("id-ID");
       });
     }
+
+    document.getElementById("btnTampil").addEventListener("click", function () {
+      const selected = document.getElementById("tanggal").value;
+      if (!selected) return alert("Pilih tanggal terlebih dahulu.");
+      loadData(selected);
+    });
 
     function exportToExcel() {
       if (dataCache.length === 0) {
